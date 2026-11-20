@@ -386,6 +386,15 @@ jobs:
               Write-Host "Ingore the printer driver error."
           }
 
+      - name: Rename exe for GWHSUPPORT
+        if: ${{ inputs.gwh-only }}
+        shell: bash
+        run: |
+          # The installer looks for <app name>.exe, so the main exe must carry the app name.
+          mv ./rustdesk/rustdesk.exe ./rustdesk/GWHSUPPORT.exe
+          echo "APP_EXE=GWHSUPPORT.exe" >> "$GITHUB_ENV"
+          echo "APP_NAME_OVERRIDE=GWHSUPPORT" >> "$GITHUB_ENV"
+
       - name: Run the Rust tests
         # x86_64 only: the tests are the same code on arm64, and that runner is the slow one.
         if: ${{ !inputs.upload-artifact && matrix.job.arch == 'x86_64' }}
@@ -484,7 +493,7 @@ jobs:
           sed -i '/dpiAware/d' res/manifest.xml
           pushd ./libs/portable
           pip3 install -r requirements.txt
-          python3 ./generate.py -f ../../rustdesk/ -o . -e ../../rustdesk/rustdesk.exe
+          python3 ./generate.py -f ../../rustdesk/ -o . -e "../../rustdesk/${APP_EXE:-rustdesk.exe}"
           popd
           mkdir -p ./SignOutput
           mv ./target/release/rustdesk-portable-packer.exe ./SignOutput/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.exe
@@ -505,7 +514,8 @@ jobs:
         if: env.UPLOAD_ARTIFACT == 'true'
         run: |
           pushd ./res/msi
-          python preprocess.py --arp -d ../../rustdesk
+          $msiAppName = if ($env:APP_NAME_OVERRIDE) { $env:APP_NAME_OVERRIDE } else { 'RustDesk' }
+          python preprocess.py --arp -d ../../rustdesk --app-name $msiAppName
           nuget restore msi.sln
           $msiPlatform = if ('${{ matrix.job.arch }}' -eq 'aarch64') { 'ARM64' } else { 'x64' }
           msbuild msi.sln -p:Configuration=Release -p:Platform=$msiPlatform /p:TargetVersion=Windows10
@@ -535,7 +545,8 @@ jobs:
         run: |
           git checkout -- res/msi
           cp -r ./rustdesk ./rustdesk-msi-template
-          mv ./rustdesk-msi-template/rustdesk.exe ./rustdesk-msi-template/RDAPPNAM.exe
+          $srcExe = if ($env:APP_EXE) { $env:APP_EXE } else { 'rustdesk.exe' }
+          mv ./rustdesk-msi-template/$srcExe ./rustdesk-msi-template/RDAPPNAM.exe
           Set-Content -Path ./rustdesk-msi-template/custom.txt -Value 'placeholder' -NoNewline
           $assets = './rustdesk-msi-template/data/flutter_assets/assets'
           New-Item -ItemType Directory -Force -Path $assets | Out-Null
