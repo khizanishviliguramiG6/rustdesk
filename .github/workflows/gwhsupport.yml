@@ -1,0 +1,26 @@
+name: GWHSUPPORT build (Windows + Android)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - gwhsupport
+    paths-ignore:
+      - "docs/**"
+      - "README.md"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gwhsupport-build
+  cancel-in-progress: true
+
+jobs:
+  build:
+    uses: ./.github/workflows/flutter-build.yml
+    secrets: inherit
+    with:
+      upload-artifact: true
+      upload-tag: "gwhsupport"
+      gwh-only: true
