@@ -1317,6 +1317,13 @@ fn get_api_server_(api: String, custom: String) -> String {
             return format!("http://{}", s);
         }
     }
+    // GWHSUPPORT: use the API server (port 21114) on the same host as the
+    // rendezvous server the client picked (office LAN or public address).
+    let rs = Config::get_rendezvous_server();
+    let host = crate::increase_port(&rs, -2);
+    if !host.is_empty() && host != rs {
+        return format!("http://{}", host);
+    }
     "https://admin.rustdesk.com".to_owned()
 }
 
