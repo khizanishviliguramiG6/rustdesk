@@ -24,13 +24,13 @@ Copy-Item (Join-Path $exe.DirectoryName '*') $Dir -Recurse -Force
 
 # 2. Config
 $cfg = Join-Path $Dir 'conf\config.yaml'
-$c = Get-Content $cfg -Raw
+$c = [IO.File]::ReadAllText($cfg, [Text.Encoding]::UTF8)
 $c = $c -replace 'lang: ".*?"', 'lang: "en"'
 $c = $c -replace 'id-server: ".*?"', "id-server: `"${Public}:21116`""
 $c = $c -replace 'relay-server: ".*?"', "relay-server: `"${Public}:21117`""
 $c = $c -replace 'api-server: ".*?"', "api-server: `"http://${Public}:21114`""
 $c = $c -replace 'key-file: ".*?"', 'key-file: "C:/RustDesk-Server/id_ed25519.pub"'
-Set-Content $cfg $c -Encoding UTF8
+[IO.File]::WriteAllText($cfg, $c, (New-Object Text.UTF8Encoding $false))  # UTF-8 without BOM, YAML rejects the BOM
 
 # 3. Windows service + firewall
 if (Get-Service RustDeskApi -ErrorAction SilentlyContinue) { & $nssm remove RustDeskApi confirm | Out-Null }
