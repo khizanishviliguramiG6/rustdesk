@@ -5,8 +5,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 APP_NAME="GWHSUPPORT"
-# Public address first (the office router loops it back), LAN address as a
-# fallback. The client tests both and uses whichever answers.
+# Public address only: the office router loops it back to the server, so it
+# works inside the office and outside. (SERVER_LAN kept for reference.)
 SERVER_LAN="192.168.0.193"
 SERVER="178.134.167.254"
 KEY="3fTlZsrbotcBrJP8QKeMwNNVKAzPhH5Mpg1wVr2+dGM="
@@ -14,13 +14,13 @@ KEY="3fTlZsrbotcBrJP8QKeMwNNVKAzPhH5Mpg1wVr2+dGM="
 CFG=libs/hbb_common/src/config.rs
 sed -i.bak \
   -e "s|RwLock::new(\"RustDesk\".to_owned())|RwLock::new(\"${APP_NAME}\".to_owned())|" \
-  -e "s|^pub const RENDEZVOUS_SERVERS: &\[&str\] = &\[.*\];|pub const RENDEZVOUS_SERVERS: \&[\&str] = \&[\"${SERVER}\", \"${SERVER_LAN}\"];|" \
+  -e "s|^pub const RENDEZVOUS_SERVERS: &\[&str\] = &\[.*\];|pub const RENDEZVOUS_SERVERS: \&[\&str] = \&[\"${SERVER}\"];|" \
   -e "s|^pub const RS_PUB_KEY: &str = \".*\";|pub const RS_PUB_KEY: \&str = \"${KEY}\";|" \
   "$CFG"
 rm -f "$CFG.bak"
 
 grep -q "\"${APP_NAME}\".to_owned()" "$CFG"
-grep -q "\"${SERVER}\", \"${SERVER_LAN}\"" "$CFG"
+grep -q "RENDEZVOUS_SERVERS: &\[&str\] = &\[\"${SERVER}\"\];" "$CFG"
 grep -q "\"${KEY}\"" "$CFG"
 echo "GWHSUPPORT branding applied:"
 grep -n "APP_NAME: RwLock\|RENDEZVOUS_SERVERS: \|RS_PUB_KEY: " "$CFG"
