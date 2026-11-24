@@ -5,9 +5,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 APP_NAME="GWHSUPPORT"
-# Public address first (the office router loops it back), LAN address as fallback.
-# and uses whichever answers, so it works inside the office (even if the
-# router has no NAT loopback) and from outside.
+# Public address first (the office router loops it back), LAN address as a
+# fallback. The client tests both and uses whichever answers.
 SERVER_LAN="192.168.0.193"
 SERVER="178.134.167.254"
 KEY="3fTlZsrbotcBrJP8QKeMwNNVKAzPhH5Mpg1wVr2+dGM="
