@@ -2313,7 +2313,12 @@ async fn secure_tcp_impl(conn: &mut Stream, key: &str, log_on_success: bool) -> 
     if use_ws() {
         return Ok(());
     }
-    key_exchange(conn, key, log_on_success).await.map(|_| ())
+    // GWHSUPPORT: our self-hosted OSS hbbs never starts a key exchange on TCP, so waiting for
+    // one only ends in "deadline has elapsed" (seen whenever a user is logged in, which sets a
+    // token). Proceed unencrypted to the rendezvous server, as with any pre-exchange server;
+    // the session between the two peers is still end-to-end encrypted.
+    let _ = (conn, key, log_on_success);
+    Ok(())
 }
 
 /// The server's key exchange on `conn`. `Ok(true)` once the stream is encrypted. `Ok(false)`
